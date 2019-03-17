@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": { "*": ["types/*"] },
+    "outDir": "./dist/",
+    "noImplicitAny": true,
+    "target": "es6",
+    "allowJs": true,
+    "preserveConstEnums": true,
+    "allowSyntheticDefaultImports": true
+  }
+}

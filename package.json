@@ -1,0 +1,35 @@
+{
+  "name": "scratchcard-epic",
+  "version": "0.1.0",
+  "description": "Scratch Card is a javascript library, it can simulate scratch ticket effect just like instant lottery. Support for adaptive container width and automatic line break.",
+  "author": {
+    "name": "Hughen",
+    "email": "446370503@163.com",
+    "url": "https://ihughen.com"
+  },
+  "keywords": [
+    "scratch card",
+    "javascript"
+  ],
+  "main": "./dist/scratchcard.js",
+  "license": "MIT",
+  "dependencies": {
+    "resize-observer-polyfill": "^1.5.1",
+    "lodash.throttle": "^4.1.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.3.4",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.3.3333",
+    "babel-loader": "^8.0.5",
+    "cross-env": "^5.2.0",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0",
+    "webpack-dev-server": "^3.2.1"
+  },
+  "scripts": {
+    "start": "cross-env NODE_ENV=development webpack-dev-server --progress --color",
+    "clear": "rm -rf dist && mkdir dist",
+    "deploy": "NODE_ENV=production webpack -p --progress"
+  }
+}

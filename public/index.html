@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Scratch Card Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+html, body, .container {
+    width: 100%;
+    height: 100%;
+}
+.container {
+    display: flex;
+}
+#sc_container {
+    flex: 1;
+    position: relative;
+}
+.scratchcard-content {
+    background-color: rebeccapurple;
+    height: 100%;
+}
+#sc_container canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="sc_container"></div>
+</div>
+<script src="/assets/scratchcard.js"></script>
+<script type="text/javascript">
+const sc_container = document.getElementById("sc_container");
+const sce = new ScratchCardEpic(sc_container, {
+    content: "test content",
+});
+</script>
+</body>
+</html>
