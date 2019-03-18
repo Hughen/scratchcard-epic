@@ -25,6 +25,14 @@ export interface Options {
    *    "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"
    */
   coating?: string | HTMLImageElement | CanvasGradient;
+
+  /**
+   * When this option is turned on, the proportion of the scratched area
+   * is automatically updated.
+   * For high performance requirements, this option should be turned off.
+   * Default value is true.
+   */
+  autoRefreshScratchedPercent?: boolean;
 }
 
 export type MenuItemKey = "copy";

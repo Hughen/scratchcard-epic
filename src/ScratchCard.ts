@@ -29,6 +29,7 @@ const optionsDefault = {
   fontFamily: "serif",
   fontSize: "14px",
   coating: "#c5c5c5",
+  autoRefreshScratchedPercent: true,
 };
 
 const menuList = [
@@ -68,6 +69,8 @@ export default class ScratchCard {
       this.cwidth = this.container.clientWidth;
       this.cheight = this.container.clientHeight;
     }
+
+    this.updateScratchedPercent = throttle(this.updateScratchedPercent, 16);
 
     // init background before canvas
     this.setBackground(this.options.content);
@@ -202,6 +205,10 @@ export default class ScratchCard {
       function upFunc() {
         self.canvas.removeEventListener(mmovename, self.handleMouseMove);
         document.body.removeEventListener(mupname, upFunc);
+        if (!self.options.autoRefreshScratchedPercent) {
+          self.updateScratchedPercent();
+        }
+        self.triggerFinished();
       }
       self.canvas.addEventListener(mmovename, self.handleMouseMove);
       document.body.addEventListener(mupname, upFunc);
@@ -213,13 +220,20 @@ export default class ScratchCard {
 
   private handleMouseMove = (evt: MouseEvent): void => {
     evt.preventDefault();
+
+    // disable hold on mouse right to scratch
     if (evt.buttons && evt.buttons !== 1) return;
     let btnKey = evt.which || evt.button;
     if (btnKey !== 1) return;
+
     const pos = this.getMousePos(evt);
     console.log("handleMouseMove", pos);
     this.brush.moveBrushPos(pos.x, pos.y);
     this.scrach();
+
+    if (this.options.autoRefreshScratchedPercent) {
+      this.updateScratchedPercent();
+    }
   }
 
   private getMousePos = (evt: Event): MousePos => {
@@ -261,5 +275,33 @@ export default class ScratchCard {
     [].forEach.call(bgs, function(bg: HTMLElement) {
       bg.style.visibility = "";
     });
+  }
+
+  private updateScratchedPercent = (): void => {
+    const imageData = this.ctx.getImageData(0, 0,
+      this.canvas.width, this.canvas.height);
+    const data = imageData.data;
+    const len = data.length;
+    let lucidNum = 0;
+    for (let i = 0; i < len; i += 4) {
+      // RGBA is transparent
+      if (data[i] === 0 && data[i+1] === 0 && data[i+2] === 0 && data[i+3] === 0) {
+        lucidNum++;
+      }
+    }
+
+    if (lucidNum > 0) {
+      this.scratchedPercent =
+        lucidNum / (this.canvas.width * this.canvas.height);
+    } else {
+      this.scratchedPercent = 0;
+    }
+  }
+
+  private triggerFinished = (): void => {
+    if (!this.options.callback) return;
+    if (this.scratchedPercent > this.options.finishedThreshold) {
+      this.options.callback();
+    }
   }
 }

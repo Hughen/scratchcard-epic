@@ -89,6 +89,10 @@ function genSurpriseContent() {
 }
 const sce = new ScratchCardEpic(sc_container, {
     content: genSurpriseContent(),
+    callback: () => {
+        console.log("The scratched area has reached the threshold.",
+            sce.scratchedPercent);
+    },
 });
 </script>
 </body>
