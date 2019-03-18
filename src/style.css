@@ -1,0 +1,58 @@
+.scratchcard-menu-wrapper {
+    position: absolute;
+    z-index: 1050;
+    display: block;
+    font-size: 14px;
+    line-height: 1.5;
+    list-style: none;
+    left: 99999px;
+    top: 99999px;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.scratchcard-menu-hidden {
+    display: none;
+}
+
+.scratchcard-menu-root {
+    position: relative;
+    margin: 0;
+    padding: 4px 0;
+    text-align: left;
+    list-style-type: none;
+    background-color: #fff;
+    background-clip: padding-box;
+    border-radius: 4px;
+    outline: none;
+    -webkit-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+ul.scratchcard-menu-root {
+    list-style: none;
+}
+
+.scratchcard-menu-item {
+    clear: both;
+    margin: 0;
+    padding: 5px 12px;
+    color: rgba(0, 0, 0, 0.78);
+    font-weight: normal;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.3s;
+    user-select: none;
+}
+
+.scratchcard-menu-item.disabled {
+    color: #9c9c9c;
+    cursor: not-allowed;
+}
+
+.scratchcard-content {
+    user-select: none !important;
+    pointer-events: none !important;
+}

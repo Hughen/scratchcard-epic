@@ -1,9 +1,10 @@
 import throttle from "lodash.throttle";
 import ResizeObserver from "resize-observer-polyfill";
-import { Options } from "Options";
+import { Options, MenuItem } from "Options";
 import { number2Pixcel, isUrl, isCSSColor, loadImage, getElementPos,
   isMobileDevice } from "./util";
-import Brush from 'Brush'
+import Brush from "Brush";
+import ContextMenu from "ContextMenu";
 
 const classPrefix = "scratchcard-content";
 
@@ -30,6 +31,12 @@ const optionsDefault = {
   coating: "#c5c5c5",
 };
 
+const menuList = [
+  {key: "copy", text: "Copy", disabled: true, onClick: function() {
+    console.log("Copy click");
+  }},
+];
+
 export default class ScratchCard {
   readonly options: Options;
   private cwidth: number;
@@ -42,6 +49,7 @@ export default class ScratchCard {
   private bg: HTMLElement;
   private canvasPos: Pos;
   private brush: Brush;
+  private contextMenu: ContextMenu;
 
   constructor(container: HTMLElement, options: Options) {
     this.options = {
@@ -72,6 +80,8 @@ export default class ScratchCard {
 
     this.cRO = new ResizeObserver(this.resizeCanvas);
     this.cRO.observe(this.container);
+
+    this.contextMenu = new ContextMenu(this.canvas, <MenuItem[]>menuList);
   }
 
   private createCanvas(): void {
@@ -201,8 +211,11 @@ export default class ScratchCard {
     window.addEventListener("resize", throttle(this.relocateCanvas, 16));
   }
 
-  private handleMouseMove = (evt: Event): void => {
+  private handleMouseMove = (evt: MouseEvent): void => {
     evt.preventDefault();
+    if (evt.buttons && evt.buttons !== 1) return;
+    let btnKey = evt.which || evt.button;
+    if (btnKey !== 1) return;
     const pos = this.getMousePos(evt);
     console.log("handleMouseMove", pos);
     this.brush.moveBrushPos(pos.x, pos.y);

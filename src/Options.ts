@@ -26,3 +26,12 @@ export interface Options {
    */
   coating?: string | HTMLImageElement | CanvasGradient;
 }
+
+export type MenuItemKey = "copy";
+
+export interface MenuItem {
+  key: MenuItemKey;
+  text: string | HTMLElement;
+  onClick: (evt: Event) => void;
+  disabled?: boolean;
+}
