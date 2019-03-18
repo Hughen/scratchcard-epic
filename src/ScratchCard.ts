@@ -5,6 +5,8 @@ import { number2Pixcel, isUrl, isCSSColor, loadImage, getElementPos,
   isMobileDevice } from "./util";
 import Brush from 'Brush'
 
+const classPrefix = "scratchcard-content";
+
 type Pos = {
   top: number;
   left: number;
@@ -41,8 +43,6 @@ export default class ScratchCard {
   private canvasPos: Pos;
   private brush: Brush;
 
-  private throttleMove: EventListenerOrEventListenerObject;
-
   constructor(container: HTMLElement, options: Options) {
     this.options = {
       ...optionsDefault,
@@ -58,18 +58,16 @@ export default class ScratchCard {
       this.cheight = this.options.size.height;
     } else {
       this.cwidth = this.container.clientWidth;
-      this.cheight = this.container.clientHeight - 300;
+      this.cheight = this.container.clientHeight;
     }
+
+    // init background before canvas
+    this.setBackground(this.options.content);
 
     this.createCanvas();
     this.brush = new Brush(this.ctx);
 
-    // set a refresh rate time
-    this.throttleMove = <EventListenerOrEventListenerObject>(
-      throttle(this.handleMouseMove, 16)
-    );
-
-    this.init();
+    this.initCard();
     this.initEvent();
 
     this.cRO = new ResizeObserver(this.resizeCanvas);
@@ -94,11 +92,13 @@ export default class ScratchCard {
     for (const entry of entries) {
       const target = (entry as any).target as HTMLElement;
       if (target !== this.container) continue;
+      console.log("resizeCanvas", target);
       this.cwidth = target.clientWidth;
-      this.cheight = target.clientHeight - 300;
+      this.cheight = target.clientHeight;
 
       this.canvas.width = this.cwidth;
       this.canvas.height = this.cheight;
+      this.initCard();
 
       this.relocateCanvas();
     }
@@ -119,6 +119,7 @@ export default class ScratchCard {
       });
     } else if (isCSSColor(rcoat)) {
       this.ctx.fillStyle = rcoat as (string | CanvasGradient);
+      console.log("setCoating", coating, this.ctx);
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     } else if (rcoat instanceof HTMLImageElement) {
       this.ctx.drawImage(rcoat, 0, 0, this.canvas.width, this.canvas.height);
@@ -128,22 +129,26 @@ export default class ScratchCard {
   }
 
   // background must be inserted into html
+  // but background visibility = hidden
   public setBackground = (
     bg: string | HTMLImageElement | HTMLElement
   ): void => {
+    this.removeAllBackground();
     if (isUrl(bg)) {
       const htmlImg = document.createElement("img");
       htmlImg.alt = "";
-      htmlImg.className = "scratchcard-content";
+      htmlImg.className = classPrefix;
       loadImage(bg).then((img: HTMLImageElement) => {
         htmlImg.src = img.src;
+        htmlImg.style.visibility = "hidden";
         this.container.appendChild(htmlImg);
       });
     } else if (bg instanceof HTMLImageElement) {
       const htmlImg = document.createElement("img");
       htmlImg.alt = "";
-      htmlImg.className = "scratchcard-content";
+      htmlImg.className = classPrefix;
       htmlImg.src = bg.src;
+      htmlImg.style.visibility = "hidden";
       this.container.appendChild(htmlImg);
     } else if (typeof bg === "string") {
       this.ctx.font = `${this.options.fontSize} ${this.options.fontFamily}`;
@@ -152,20 +157,22 @@ export default class ScratchCard {
       const div = document.createElement("div");
       const span = document.createElement("span");
       span.innerText = bg;
-      span.className = "scratchcard-content-bg";
-      div.className = "scratchcard-content";
+      span.className = `${classPrefix}-text`;
+      div.className = classPrefix;
       div.appendChild(span);
+      div.style.visibility = "hidden";
       this.container.appendChild(div);
     } else {
-      (bg as HTMLElement).classList.add("scratchcard-content");
+      (bg as HTMLElement).classList.add(classPrefix);
+      (bg as HTMLElement).style.visibility = "hidden";
       this.container.appendChild(bg as HTMLElement);
     }
   }
 
-  private init(): void {
+  private initCard(): void {
     this.clear();
     this.setCoating(this.options.coating);
-    this.setBackground(this.options.content);
+    this.showBackground();
   }
 
   private initEvent(): void {
@@ -183,20 +190,21 @@ export default class ScratchCard {
     this.canvas.addEventListener(mdownname, function(evt) {
       evt.preventDefault();
       function upFunc() {
-        self.canvas.removeEventListener(mmovename, self.throttleMove);
+        self.canvas.removeEventListener(mmovename, self.handleMouseMove);
         document.body.removeEventListener(mupname, upFunc);
       }
-      self.canvas.addEventListener(mmovename, self.throttleMove);
+      self.canvas.addEventListener(mmovename, self.handleMouseMove);
       document.body.addEventListener(mupname, upFunc);
     });
 
     window.addEventListener("scroll", throttle(this.relocateCanvas, 16));
+    window.addEventListener("resize", throttle(this.relocateCanvas, 16));
   }
 
   private handleMouseMove = (evt: Event): void => {
     evt.preventDefault();
-    console.log("handleMouseMove", this);
     const pos = this.getMousePos(evt);
+    console.log("handleMouseMove", pos);
     this.brush.moveBrushPos(pos.x, pos.y);
     this.scrach();
   }
@@ -211,12 +219,10 @@ export default class ScratchCard {
       ey = (evt as TouchEvent).touches[0].clientY;
     }
 
-    let pos: MousePos = {
+    return {
       x: ex - this.canvasPos.left,
       y: ey - this.canvasPos.top
     };
-
-    return pos;
   }
 
   private scrach = (): void => {
@@ -228,5 +234,19 @@ export default class ScratchCard {
 
   private relocateCanvas = (): void => {
     this.canvasPos = getElementPos(this.canvas);
+  }
+
+  private removeAllBackground = (): void => {
+    const bgs = this.container.querySelectorAll(`.${classPrefix}`);
+    [].forEach.call(bgs, function(bg: HTMLElement) {
+      bg.remove();
+    });
+  }
+
+  private showBackground = (): void => {
+    const bgs = this.container.querySelectorAll(`.${classPrefix}`);
+    [].forEach.call(bgs, function(bg: HTMLElement) {
+      bg.style.visibility = "";
+    });
   }
 }

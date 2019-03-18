@@ -6,37 +6,89 @@
 <title>Scratch Card Demo</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
+* {
+    box-sizing: border-box;
+}
 html, body, .container {
     width: 100%;
     height: 100%;
+    margin: 0;
 }
 .container {
     display: flex;
+    padding: 15px;
+}
+.sc-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 #sc_container {
-    flex: 1;
     position: relative;
-}
-.scratchcard-content {
-    background-color: rebeccapurple;
-    height: 100%;
 }
 #sc_container canvas {
     position: absolute;
     left: 0;
     top: 0;
 }
+.sc-surprise-text {
+    padding: 15px;
+    background-color: beige;
+    display: inline-block;
+}
+.vip-lang {
+    font-family: SFMono-Regular,Consolas,monospace,Liberation Mono,Menlo,Courier,monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: left;
+    word-spacing: normal;
+    word-break: normal;
+    text-shadow: 0 1px white;
+}
+code.vip-lang {
+    display: flex;
+}
+.vip-lang .vip-variable {
+    color: #008080;
+}
+.vip-lang .vip-value {
+    color: #d73a49;
+    font-weight: bold;
+}
 </style>
 </head>
 <body>
 <div class="container">
-    <div id="sc_container"></div>
+    <div class="sc-wrapper">
+        <div id="sc_container"></div>
+    </div>
+</div>
+<div id="sc_bg" class="sc-surprise-text" style="display: none;">
+    <code class="vip-lang">
+        <span class="vip-variable">YOUR_VIP_CODE</span>
+        <span class="vip-op">=</span>
+        <span class="vip-value">77-PSG0-SX6F-AM2U-YFQS6IFL</span>
+    </code>
+    <code class="vip-lang">
+        <span class="vip-variable">ACT_LICENSE_KEY</span>
+        <span class="vip-op">=</span>
+        <span class="vip-value">OR02y6YGO61PrDb2BWdNWCrlg3mSTrpoWwBWtTTY</span>
+    </code>
 </div>
 <script src="/assets/scratchcard.js"></script>
 <script type="text/javascript">
 const sc_container = document.getElementById("sc_container");
+function genSurpriseContent() {
+    const sc_bg = document.getElementById("sc_bg");
+    const content = sc_bg.cloneNode(true);
+    content.removeAttribute("id");
+    content.style.display = "";
+    return content;
+}
 const sce = new ScratchCardEpic(sc_container, {
-    content: "test content",
+    content: genSurpriseContent(),
 });
 </script>
 </body>
