@@ -54,7 +54,8 @@ export default class ContextMenu {
     this.menuData.forEach((item: MenuItem) => {
       const li = document.createElement("li");
       li.className = `${classPrefix}-item`;
-      if (item.disabled) {
+      const disabled = item.disabled === undefined || !!item.disabled;
+      if (disabled) {
         li.classList.add("disabled");
       }
       li.setAttribute("role", "menuitem");
@@ -66,7 +67,7 @@ export default class ContextMenu {
         lspan.appendChild(item.text as HTMLElement);
       }
       li.appendChild(lspan);
-      if (!item.disabled) {
+      if (!disabled) {
         li.addEventListener("click", item.onClick);
       }
       this.menuItemListenerList.push(() => {
@@ -92,9 +93,11 @@ export default class ContextMenu {
 
   public remove = (): void => {
     this.removeEvent();
-    this.menuList.remove();
-    this.dropdownDiv.remove();
-    this.topDiv.remove();
+    if (this.menuList) {
+      this.menuList.remove();
+      this.dropdownDiv.remove();
+      this.topDiv.remove();
+    }
     this.menuList = null;
     this.menuData = [];
   }
@@ -132,7 +135,7 @@ export default class ContextMenu {
   }
 
   private handleWindowClick = (evt: Event): void => {
-    console.log("handleWindowClick", evt);
+    if (!this.menuList) return;
     if (evt.target) {
       const clist = (evt.target as HTMLElement).classList;
       if (clist.contains(`${classPrefix}-item`) &&
@@ -143,15 +146,15 @@ export default class ContextMenu {
   }
 
   private handleContextMenu = (evt: MouseEvent, area?: string): void => {
-    console.log("handleContextMenu", evt, area);
     if (area) {
-      this.hide();
-      if (this.pointerInClient(evt)) {
+      if (!this.menuList && this.pointerInClient(evt)) {
         evt.preventDefault();
       }
+      this.hide();
       return;
     }
     evt.preventDefault();
+    if (!this.menuList) return;
     evt.stopPropagation();
     this.move(evt.pageX, evt.pageY);
     this.show();

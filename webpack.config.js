@@ -9,7 +9,7 @@ module.exports = {
     scratchcard: "./index.js"
   },
   context: path.resolve(__dirname, "src"),
-  watch: true,
+  watch: isDev,
   module: {
     rules: [{
       test: /\.tsx?$/,

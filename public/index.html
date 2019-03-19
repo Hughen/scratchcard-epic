@@ -88,12 +88,17 @@ function genSurpriseContent() {
     return content;
 }
 const sce = new ScratchCardEpic(sc_container, {
-    content: genSurpriseContent(),
-    callback: () => {
-        console.log("The scratched area has reached the threshold.",
-            sce.scratchedPercent);
-    },
-});
+        content: genSurpriseContent(),
+        callback: () => {
+            console.log("The scratched area has reached the threshold.",
+                sce.scratchedPercent);
+        },
+    }, [
+        {key: "copy", text: "Copy", onClick: function() {
+            console.log("Copy click");
+        }},
+    ]
+);
 </script>
 </body>
 </html>

@@ -33,6 +33,11 @@ export interface Options {
    * Default value is true.
    */
   autoRefreshScratchedPercent?: boolean;
+
+  /**
+   * default value is document.body
+   */
+  menuContainer?: HTMLElement;
 }
 
 export type MenuItemKey = "copy";

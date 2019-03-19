@@ -30,14 +30,15 @@ const optionsDefault = {
   fontSize: "14px",
   coating: "#b5b5b5",
   autoRefreshScratchedPercent: true,
+  menuContainer: document.body,
 };
 
-const menuList = [
-  {key: "copy", text: "Copy", disabled: true, onClick: function() {
-    console.log("Copy click");
-  }},
-];
-
+/**
+ * TODO: no sizeAdaption feature.
+ *
+ * @export
+ * @class ScratchCard
+ */
 export default class ScratchCard {
   readonly options: Options;
   private cwidth: number;
@@ -47,13 +48,13 @@ export default class ScratchCard {
   readonly container: HTMLElement;
   private canvas: HTMLCanvasElement;
   private cRO: ResizeObserver;
-  private bg: HTMLElement;
   private canvasPos: Pos;
   private brush: Brush;
   private contextMenu: ContextMenu;
   private alreadyRefreshContextMenu: boolean;
+  private menuData: MenuItem[];
 
-  constructor(container: HTMLElement, options: Options) {
+  constructor(container: HTMLElement, options: Options, menu: MenuItem[]) {
     this.options = {
       ...optionsDefault,
       ...options,
@@ -61,7 +62,6 @@ export default class ScratchCard {
     };
     this.container = <HTMLElement>container;
     this.scratchedPercent = 0;
-    this.bg = null;
     this.alreadyRefreshContextMenu = false;
 
     if (!this.options.sizeAdaption) {
@@ -86,7 +86,8 @@ export default class ScratchCard {
     this.cRO = new ResizeObserver(this.resizeCanvas);
     this.cRO.observe(this.container);
 
-    this.contextMenu = new ContextMenu(this.canvas, <MenuItem[]>menuList);
+    this.menuData = [...menu];
+    this.contextMenu = new ContextMenu(this.canvas, this.menuData, this.options.menuContainer);
   }
 
   private createCanvas(): void {
@@ -108,7 +109,6 @@ export default class ScratchCard {
     for (const entry of entries) {
       const target = (entry as any).target as HTMLElement;
       if (target !== this.container) continue;
-      console.log("resizeCanvas", target);
       this.cwidth = target.clientWidth;
       this.cheight = target.clientHeight;
 
@@ -179,7 +179,6 @@ export default class ScratchCard {
     } else if (typeof bg === "string") {
       this.ctx.font = `${this.options.fontSize} ${this.options.fontFamily}`;
       const mtxt = this.ctx.measureText(bg);
-      console.log("setBackground measureText", bg, mtxt);
       const div = document.createElement("div");
       const span = document.createElement("span");
       span.innerText = bg;
@@ -226,8 +225,8 @@ export default class ScratchCard {
         if (self.scratchedPercent > self.options.finishedThreshold) {
           if (!self.alreadyRefreshContextMenu) {
             self.alreadyRefreshContextMenu = true;
-            menuList[0].disabled = false;
-            self.contextMenu.reCreateMenu(<MenuItem[]>menuList);
+            self.enableAllMenu();
+            self.contextMenu.reCreateMenu(self.menuData);
           }
           if (mouseClickType(e) === 1) {
             self.triggerFinished();
@@ -249,7 +248,6 @@ export default class ScratchCard {
     if (mouseClickType(evt) !== 1) return;
 
     const pos = this.getMousePos(evt);
-    console.log("handleMouseMove", pos);
     this.brush.moveBrushPos(pos.x, pos.y);
     this.scrach();
 
@@ -323,5 +321,16 @@ export default class ScratchCard {
   private triggerFinished = (): void => {
     if (!this.options.callback) return;
     this.options.callback();
+  }
+
+  public setContextMenu = (menu: MenuItem[]): void => {
+    this.contextMenu.reCreateMenu(menu);
+  }
+
+  private enableAllMenu = (): void => {
+    const len = this.menuData.length;
+    for (let i = 0; i < len; i++) {
+      this.menuData[i].disabled = false;
+    }
   }
 }
