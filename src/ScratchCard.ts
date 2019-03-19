@@ -2,7 +2,7 @@ import throttle from "lodash.throttle";
 import ResizeObserver from "resize-observer-polyfill";
 import { Options, MenuItem } from "Options";
 import { number2Pixcel, isUrl, isCSSColor, loadImage, getElementPos,
-  isMobileDevice } from "./util";
+  isMobileDevice, mouseClickType } from "./util";
 import Brush from "Brush";
 import ContextMenu from "ContextMenu";
 
@@ -28,7 +28,7 @@ const optionsDefault = {
   finishedThreshold: 0.5,
   fontFamily: "serif",
   fontSize: "14px",
-  coating: "#c5c5c5",
+  coating: "#b5b5b5",
   autoRefreshScratchedPercent: true,
 };
 
@@ -51,6 +51,7 @@ export default class ScratchCard {
   private canvasPos: Pos;
   private brush: Brush;
   private contextMenu: ContextMenu;
+  private alreadyRefreshContextMenu: boolean;
 
   constructor(container: HTMLElement, options: Options) {
     this.options = {
@@ -61,6 +62,7 @@ export default class ScratchCard {
     this.container = <HTMLElement>container;
     this.scratchedPercent = 0;
     this.bg = null;
+    this.alreadyRefreshContextMenu = false;
 
     if (!this.options.sizeAdaption) {
       this.cwidth = this.options.size.width;
@@ -89,6 +91,7 @@ export default class ScratchCard {
 
   private createCanvas(): void {
     this.canvas = document.createElement("canvas");
+    this.canvas.tabIndex = 0;
 
     this.canvas.width = this.cwidth;
     this.canvas.height = this.cheight;
@@ -214,13 +217,22 @@ export default class ScratchCard {
     }
     this.canvas.addEventListener(mdownname, function(evt) {
       evt.preventDefault();
-      function upFunc() {
+      function upFunc(e: Event) {
         self.canvas.removeEventListener(mmovename, self.handleMouseMove);
         document.body.removeEventListener(mupname, upFunc);
         if (!self.options.autoRefreshScratchedPercent) {
           self.updateScratchedPercent();
         }
-        self.triggerFinished();
+        if (self.scratchedPercent > self.options.finishedThreshold) {
+          if (!self.alreadyRefreshContextMenu) {
+            self.alreadyRefreshContextMenu = true;
+            menuList[0].disabled = false;
+            self.contextMenu.reCreateMenu(<MenuItem[]>menuList);
+          }
+          if (mouseClickType(e) === 1) {
+            self.triggerFinished();
+          }
+        }
       }
       self.canvas.addEventListener(mmovename, self.handleMouseMove);
       document.body.addEventListener(mupname, upFunc);
@@ -234,9 +246,7 @@ export default class ScratchCard {
     evt.preventDefault();
 
     // disable hold on mouse right to scratch
-    if (evt.buttons && evt.buttons !== 1) return;
-    let btnKey = evt.which || evt.button;
-    if (btnKey !== 1) return;
+    if (mouseClickType(evt) !== 1) return;
 
     const pos = this.getMousePos(evt);
     console.log("handleMouseMove", pos);
@@ -312,8 +322,6 @@ export default class ScratchCard {
 
   private triggerFinished = (): void => {
     if (!this.options.callback) return;
-    if (this.scratchedPercent > this.options.finishedThreshold) {
-      this.options.callback();
-    }
+    this.options.callback();
   }
 }

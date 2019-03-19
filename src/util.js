@@ -71,3 +71,15 @@ export function loadImage(imgUri) {
 export function isMobileDevice() {
   return /Android|webOS|iPhone|iPad|iPod|Opera Mini/i.test(navigator.userAgent);
 }
+
+export function mouseClickType(evt) {
+  if (evt.buttons && evt.buttons !== 1) return 2;
+  let btnKey = evt.which || evt.button;
+  if (btnKey !== 1) return 2;
+
+  return 1;
+}
+
+export function isAppleMac() {
+  return navigator.platform.toLocaleLowerCase().indexOf("mac") !== -1;
+}

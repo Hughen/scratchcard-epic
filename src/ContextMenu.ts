@@ -1,9 +1,21 @@
-import { MenuItem } from "Options";
-import { getElementPos } from "./util";
+import { MenuItem, MenuItemKey } from "Options";
+import { getElementPos, isMobileDevice, isAppleMac } from "./util";
 
 import "./style.css";
 
 const classPrefix = "scratchcard-menu";
+
+function getShortcutByKey(key: MenuItemKey): string {
+  switch(key) {
+  case "copy":
+    if (!isMobileDevice() && isAppleMac())
+      return "Command+C";
+    else
+      return "Ctrl+C";
+  default:
+    return "";
+  }
+}
 
 export default class ContextMenu {
   private menuData: MenuItem[];
@@ -14,6 +26,7 @@ export default class ContextMenu {
   private dropdownDiv: HTMLElement;
 
   private contextClient: HTMLElement;
+  private menuItemListenerList: Array<Function>;
 
   constructor(
     client: HTMLElement, menu?: MenuItem[], popupContainer?: HTMLElement
@@ -22,10 +35,11 @@ export default class ContextMenu {
     this.menuData = menu || [];
 
     this.container = popupContainer || document.body;
+    this.menuItemListenerList = [];
+
     this.createMenuElement();
     this.loadToHtml();
 
-    // global events can only be initialized once
     this.initEvent();
   }
 
@@ -44,13 +58,20 @@ export default class ContextMenu {
         li.classList.add("disabled");
       }
       li.setAttribute("role", "menuitem");
-      console.log("createMenuElement", item);
+      const lspan = document.createElement("span");
+      lspan.className = `${classPrefix}-item-text`;
       if (typeof item.text === "string") {
-        li.innerText = item.text as string;
+        lspan.innerText = item.text as string;
       } else {
-        li.appendChild(item.text as HTMLElement);
+        lspan.appendChild(item.text as HTMLElement);
       }
-      li.addEventListener("click", item.onClick);
+      li.appendChild(lspan);
+      if (!item.disabled) {
+        li.addEventListener("click", item.onClick);
+      }
+      this.menuItemListenerList.push(() => {
+        li.removeEventListener("click", item.onClick);
+      });
       ul.appendChild(li);
     });
 
@@ -70,14 +91,12 @@ export default class ContextMenu {
   }
 
   public remove = (): void => {
+    this.removeEvent();
     this.menuList.remove();
     this.dropdownDiv.remove();
     this.topDiv.remove();
     this.menuList = null;
     this.menuData = [];
-
-    // need to remove the listener?
-    // is safe?
   }
 
   public reCreateMenu = (menu?: MenuItem[]): void => {
@@ -85,6 +104,8 @@ export default class ContextMenu {
     this.menuData = menu || [];
     this.createMenuElement();
     this.loadToHtml();
+
+    this.initEvent();
   }
 
   private loadToHtml(): void {
@@ -136,12 +157,28 @@ export default class ContextMenu {
     this.show();
   }
 
+  private handleGlobalContextMenu = (evt: MouseEvent): void => {
+    this.handleContextMenu(evt, "global");
+  }
+
+  /**
+   * call it before remove all menu item
+   *
+   * @private
+   * @memberof ContextMenu
+   */
   private initEvent(): void {
     this.contextClient.addEventListener("contextmenu", this.handleContextMenu);
-    window.addEventListener("contextmenu", (evt) => {
-      this.handleContextMenu(evt, "global");
-    });
+    window.addEventListener("contextmenu", this.handleGlobalContextMenu);
     window.addEventListener("click", this.handleWindowClick);
+  }
+
+  private removeEvent(): void {
+    window.removeEventListener("click", this.handleWindowClick);
+    window.removeEventListener("contextmenu", this.handleGlobalContextMenu);
+    this.contextClient.removeEventListener("contextmenu", this.handleContextMenu);
+    this.menuItemListenerList.forEach((func: Function) => func());
+    this.menuItemListenerList = [];
   }
 
   private pointerInClient = (evt: MouseEvent): boolean => {
