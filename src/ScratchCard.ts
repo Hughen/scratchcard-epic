@@ -122,23 +122,33 @@ export default class ScratchCard {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
+  /**
+   * return Promise
+   *
+   * @memberof ScratchCard
+   */
   public setCoating = (
     coating?: string | HTMLImageElement | CanvasGradient
-  ): void => {
-    const rcoat = coating || this.options.coating;
-    if (isUrl(rcoat)) {
-      loadImage(rcoat).then((img: HTMLImageElement) => {
-        this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
-      });
-    } else if (isCSSColor(rcoat)) {
-      this.ctx.fillStyle = rcoat as (string | CanvasGradient);
-      console.log("setCoating", coating, this.ctx);
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    } else if (rcoat instanceof HTMLImageElement) {
-      this.ctx.drawImage(rcoat, 0, 0, this.canvas.width, this.canvas.height);
-    } else {
-      new Error(`"${coating}", this type of coating is not supported`);
-    }
+  ): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const rcoat = coating || this.options.coating;
+      if (isUrl(rcoat)) {
+        loadImage(rcoat).then((img: HTMLImageElement) => {
+          this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+          resolve();
+        }, reject);
+      } else if (isCSSColor(rcoat)) {
+        this.ctx.fillStyle = rcoat as (string | CanvasGradient);
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        resolve();
+      } else if (rcoat instanceof HTMLImageElement) {
+        rcoat.crossOrigin = "";
+        this.ctx.drawImage(rcoat, 0, 0, this.canvas.width, this.canvas.height);
+        resolve();
+      } else {
+        reject(new Error(`"${coating}", this type of coating is not supported`));
+      }
+    });
   }
 
   // background must be inserted into html
@@ -184,8 +194,10 @@ export default class ScratchCard {
 
   private initCard(): void {
     this.clear();
-    this.setCoating(this.options.coating);
-    this.showBackground();
+    this.setCoating(this.options.coating)
+      .then(this.showBackground, (err) => {
+        throw err;
+      });
   }
 
   private initEvent(): void {

@@ -57,6 +57,7 @@ export function isCSSColor(color) {
 export function loadImage(imgUri) {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = "";
     img.onload = () => {
       resolve(img);
     };
