@@ -37,7 +37,7 @@ module.exports = {
     publicPath: "/assets/",
     watchContentBase: true,
   },
-  plugins: [
+  plugins: isDev ? [
     new webpack.HotModuleReplacementPlugin(),
-  ],
+  ]:[],
 };
