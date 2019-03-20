@@ -224,9 +224,6 @@ export default class ScratchCard {
     }
   }
 
-  /**
-   * alias @initCard
-   */
   public refresh = (): void => {
     this.ctx.save();
     this.ctx.globalCompositeOperation = "source-over";
@@ -236,9 +233,12 @@ export default class ScratchCard {
   }
 
   private initCard(): Promise<any> {
+    this.setBackgroundVisible(false);
     this.clear();
     return this.setCoating(this.options.coating)
-      .then(this.showBackground, (err) => {
+      .then(() => {
+        this.setBackgroundVisible(true);
+      }, (err) => {
         throw err;
       })
       .then(() => {
@@ -334,11 +334,14 @@ export default class ScratchCard {
     });
   }
 
-  private showBackground = (): void => {
+  /**
+   * background visibility default value is visible
+   */
+  private setBackgroundVisible = (visible?: boolean): void => {
     if (!this.ctx) return;
     const bgs = this.container.querySelectorAll(`.${classPrefix}`);
-    [].forEach.call(bgs, function(bg: HTMLElement) {
-      bg.style.visibility = "visible";
+    [].forEach.call(bgs, function (bg: HTMLElement) {
+      bg.style.visibility = (visible === undefined || visible) ? "visible" : "hidden";
     });
   }
 
