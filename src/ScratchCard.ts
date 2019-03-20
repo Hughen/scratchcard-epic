@@ -18,6 +18,12 @@ type MousePos = {
   y: number;
 };
 
+type PointerEventName = {
+  down: string;
+  up: string;
+  move: string;
+};
+
 const optionsDefault = {
   callback: () => {},
   size: {
@@ -53,6 +59,7 @@ export default class ScratchCard {
   private contextMenu: ContextMenu;
   private alreadyRefreshContextMenu: boolean;
   private menuData: MenuItem[];
+  private pointerEventName: PointerEventName;
 
   constructor(container: HTMLElement, options: Options, menu: MenuItem[]) {
     this.options = {
@@ -73,6 +80,7 @@ export default class ScratchCard {
     }
 
     this.updateScratchedPercent = throttle(this.updateScratchedPercent, 16);
+    this.relocateCanvas = throttle(this.relocateCanvas, 16);
 
     // init background before canvas
     this.setBackground(this.options.content);
@@ -128,6 +136,8 @@ export default class ScratchCard {
   /**
    * return Promise
    *
+   * Note: The value of ctx must be evaluated. Because of the promise chain, 
+   * the remove function may be called before setCoating.
    * @memberof ScratchCard
    */
   public setCoating = (
@@ -137,16 +147,20 @@ export default class ScratchCard {
       const rcoat = coating || this.options.coating;
       if (isUrl(rcoat)) {
         loadImage(rcoat).then((img: HTMLImageElement) => {
-          this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+          this.ctx && this.ctx.drawImage(
+            img, 0, 0, this.canvas.width, this.canvas.height);
           resolve();
         }, reject);
       } else if (isCSSColor(rcoat)) {
-        this.ctx.fillStyle = rcoat as (string | CanvasGradient);
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        if (this.ctx) {
+          this.ctx.fillStyle = rcoat as (string | CanvasGradient);
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
         resolve();
       } else if (rcoat instanceof HTMLImageElement) {
         rcoat.crossOrigin = "";
-        this.ctx.drawImage(rcoat, 0, 0, this.canvas.width, this.canvas.height);
+        this.ctx && this.ctx.drawImage(
+          rcoat, 0, 0, this.canvas.width, this.canvas.height);
         resolve();
       } else {
         reject(new Error(`"${coating}", this type of coating is not supported`));
@@ -192,6 +206,22 @@ export default class ScratchCard {
     }
   }
 
+  private initPointerType(): void {
+    if (isMobileDevice()) {
+      this.pointerEventName = {
+        down: "touchstart",
+        up: "touchend",
+        move: "touchmove"
+      };
+    } else {
+      this.pointerEventName = {
+        down: "mousedown",
+        up: "mouseup",
+        move: "mousemove"
+      };
+    }
+  }
+
   private initCard(): void {
     this.clear();
     this.setCoating(this.options.coating)
@@ -201,42 +231,38 @@ export default class ScratchCard {
   }
 
   private initEvent(): void {
+    this.initPointerType();
+    const mdownname = this.pointerEventName.down;
+    this.canvas.addEventListener(mdownname, this.handleMouseDownEvent);
+
+    window.addEventListener("scroll", this.relocateCanvas);
+    window.addEventListener("resize", this.relocateCanvas);
+  }
+
+  private handleMouseDownEvent = (evt: Event): void => {
     const self = this;
-    let mdownname: string, mupname: string, mmovename: string;
-    if (isMobileDevice()) {
-      mdownname = "touchstart";
-      mupname = "touchend";
-      mmovename = "touchmove";
-    } else {
-      mdownname = "mousedown";
-      mupname = "mouseup";
-      mmovename = "mousemove";
-    }
-    this.canvas.addEventListener(mdownname, function(evt) {
-      evt.preventDefault();
-      function upFunc(e: Event) {
-        self.canvas.removeEventListener(mmovename, self.handleMouseMove);
-        document.body.removeEventListener(mupname, upFunc);
-        if (!self.options.autoRefreshScratchedPercent) {
-          self.updateScratchedPercent();
+    const mupname = this.pointerEventName.up;
+    const mmovename = this.pointerEventName.move;
+    evt.preventDefault();
+    function upFunc(e: Event) {
+      self.canvas.removeEventListener(mmovename, self.handleMouseMove);
+      document.body.removeEventListener(mupname, upFunc);
+      if (!self.options.autoRefreshScratchedPercent) {
+        self.updateScratchedPercent();
+      }
+      if (self.scratchedPercent > self.options.finishedThreshold) {
+        if (!self.alreadyRefreshContextMenu) {
+          self.alreadyRefreshContextMenu = true;
+          self.enableAllMenu();
+          self.contextMenu.reCreateMenu(self.menuData);
         }
-        if (self.scratchedPercent > self.options.finishedThreshold) {
-          if (!self.alreadyRefreshContextMenu) {
-            self.alreadyRefreshContextMenu = true;
-            self.enableAllMenu();
-            self.contextMenu.reCreateMenu(self.menuData);
-          }
-          if (mouseClickType(e) === 1) {
-            self.triggerFinished();
-          }
+        if (mouseClickType(e) === 1) {
+          self.triggerFinished();
         }
       }
-      self.canvas.addEventListener(mmovename, self.handleMouseMove);
-      document.body.addEventListener(mupname, upFunc);
-    });
-
-    window.addEventListener("scroll", throttle(this.relocateCanvas, 16));
-    window.addEventListener("resize", throttle(this.relocateCanvas, 16));
+    }
+    self.canvas.addEventListener(mmovename, self.handleMouseMove);
+    document.body.addEventListener(mupname, upFunc);
   }
 
   private handleMouseMove = (evt: MouseEvent): void => {
@@ -289,6 +315,7 @@ export default class ScratchCard {
   }
 
   private showBackground = (): void => {
+    if (!this.ctx) return;
     const bgs = this.container.querySelectorAll(`.${classPrefix}`);
     [].forEach.call(bgs, function(bg: HTMLElement) {
       bg.style.visibility = "visible";
@@ -330,5 +357,19 @@ export default class ScratchCard {
     for (let i = 0; i < len; i++) {
       this.menuData[i].disabled = false;
     }
+  }
+
+  /**
+   * safely remove ScratchCard instance
+   */
+  public remove = (): void => {
+    this.contextMenu.remove();
+    const mdownname = this.pointerEventName.down;
+    this.canvas.removeEventListener(mdownname, this.handleMouseDownEvent);
+    window.removeEventListener("scroll", this.relocateCanvas);
+    window.removeEventListener("resize", this.relocateCanvas);
+    this.cRO.unobserve(this.container);
+    this.ctx = null;
+    this.canvas = null;
   }
 }
