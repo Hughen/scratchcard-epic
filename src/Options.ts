@@ -5,6 +5,7 @@ type EleSize = {
 
 export interface Options {
   callback?: () => void;
+  onStart?: () => void;
   size?: EleSize;
   sizeAdaption?: boolean;
   finishedThreshold?: number;

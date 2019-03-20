@@ -26,6 +26,7 @@ type PointerEventName = {
 
 const optionsDefault = {
   callback: () => {},
+  onStart: () => {},
   size: {
     width: 300,
     height: 150
@@ -60,6 +61,7 @@ export default class ScratchCard {
   private alreadyRefreshContextMenu: boolean;
   private menuData: MenuItem[];
   private pointerEventName: PointerEventName;
+  private triggeredStartEvent: boolean;
 
   constructor(container: HTMLElement, options: Options, menu: MenuItem[]) {
     this.options = {
@@ -222,11 +224,25 @@ export default class ScratchCard {
     }
   }
 
-  private initCard(): void {
+  /**
+   * alias @initCard
+   */
+  public refresh = (): void => {
+    this.ctx.save();
+    this.ctx.globalCompositeOperation = "source-over";
+    this.initCard().then(() => {
+      this.ctx.restore()
+    });
+  }
+
+  private initCard(): Promise<any> {
     this.clear();
-    this.setCoating(this.options.coating)
+    return this.setCoating(this.options.coating)
       .then(this.showBackground, (err) => {
         throw err;
+      })
+      .then(() => {
+        this.triggeredStartEvent = false;
       });
   }
 
@@ -247,6 +263,10 @@ export default class ScratchCard {
     function upFunc(e: Event) {
       self.canvas.removeEventListener(mmovename, self.handleMouseMove);
       document.body.removeEventListener(mupname, upFunc);
+      if (!self.triggeredStartEvent) {
+        self.triggeredStartEvent = true;
+        self.options.onStart();
+      }
       if (!self.options.autoRefreshScratchedPercent) {
         self.updateScratchedPercent();
       }
@@ -297,8 +317,8 @@ export default class ScratchCard {
   }
 
   private scrach = (): void => {
-    this.ctx.globalCompositeOperation = "destination-out";
     this.ctx.save();
+    this.ctx.globalCompositeOperation = "destination-out";
     this.brush.brush();
     this.ctx.restore();
   }

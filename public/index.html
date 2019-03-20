@@ -93,6 +93,9 @@ const sce = new ScratchCardEpic(sc_container, {
             console.log("The scratched area has reached the threshold.",
                 sce.scratchedPercent);
         },
+        onStart: () => {
+            console.log("ScratchCardEpic start scratch.", sce.scratchedPercent);
+        },
     }, [
         {key: "copy", text: "Copy", onClick: function() {
             console.log("Copy click");
