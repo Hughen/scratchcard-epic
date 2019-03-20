@@ -155,7 +155,6 @@ export default class ScratchCard {
   }
 
   // background must be inserted into html
-  // but background visibility = hidden
   public setBackground = (
     bg: string | HTMLImageElement | HTMLElement
   ): void => {
@@ -178,7 +177,6 @@ export default class ScratchCard {
       this.container.appendChild(htmlImg);
     } else if (typeof bg === "string") {
       this.ctx.font = `${this.options.fontSize} ${this.options.fontFamily}`;
-      const mtxt = this.ctx.measureText(bg);
       const div = document.createElement("div");
       const span = document.createElement("span");
       span.innerText = bg;
@@ -293,7 +291,7 @@ export default class ScratchCard {
   private showBackground = (): void => {
     const bgs = this.container.querySelectorAll(`.${classPrefix}`);
     [].forEach.call(bgs, function(bg: HTMLElement) {
-      bg.style.visibility = "";
+      bg.style.visibility = "visible";
     });
   }
 

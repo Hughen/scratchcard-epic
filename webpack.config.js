@@ -27,7 +27,9 @@ module.exports = {
   output: {
     filename: isDev ? "[name].js":"[name].min.js",
     path: path.resolve(__dirname, "dist"),
-    chunkFilename: "[name].bundle.js"
+    chunkFilename: "[name].bundle.js",
+    library: isDev ? undefined:"ScratchCardEpic",
+    libraryTarget: isDev ? "window":"umd",
   },
   devServer: {
     compress: false,
