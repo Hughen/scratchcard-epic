@@ -82,7 +82,7 @@ export default class ScratchCard {
     }
 
     this.updateScratchedPercent = throttle(this.updateScratchedPercent, 16);
-    this.relocateCanvas = throttle(this.relocateCanvas, 16);
+    this.relocatePosition = throttle(this.relocatePosition, 16);
 
     // init background before canvas
     this.setBackground(this.options.content);
@@ -112,7 +112,7 @@ export default class ScratchCard {
     this.ctx = this.canvas.getContext("2d");
 
     // init canvas pos
-    this.relocateCanvas();
+    this.relocatePosition();
   }
 
   private resizeCanvas = (entries: any): void => {
@@ -126,7 +126,7 @@ export default class ScratchCard {
       this.canvas.height = this.cheight;
       this.initCard();
 
-      this.relocateCanvas();
+      this.relocatePosition();
     }
   }
 
@@ -251,8 +251,8 @@ export default class ScratchCard {
     const mdownname = this.pointerEventName.down;
     this.canvas.addEventListener(mdownname, this.handleMouseDownEvent);
 
-    window.addEventListener("scroll", this.relocateCanvas);
-    window.addEventListener("resize", this.relocateCanvas);
+    window.addEventListener("scroll", this.relocatePosition);
+    window.addEventListener("resize", this.relocatePosition);
   }
 
   private handleMouseDownEvent = (evt: Event): void => {
@@ -323,7 +323,7 @@ export default class ScratchCard {
     this.ctx.restore();
   }
 
-  private relocateCanvas = (): void => {
+  public relocatePosition = (): void => {
     this.canvasPos = getElementPos(this.canvas);
   }
 
@@ -389,8 +389,8 @@ export default class ScratchCard {
     this.contextMenu.remove();
     const mdownname = this.pointerEventName.down;
     this.canvas.removeEventListener(mdownname, this.handleMouseDownEvent);
-    window.removeEventListener("scroll", this.relocateCanvas);
-    window.removeEventListener("resize", this.relocateCanvas);
+    window.removeEventListener("scroll", this.relocatePosition);
+    window.removeEventListener("resize", this.relocatePosition);
     this.cRO.unobserve(this.container);
     this.ctx = null;
     this.canvas = null;
