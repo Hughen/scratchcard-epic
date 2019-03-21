@@ -27,6 +27,7 @@ type PointerEventName = {
 const optionsDefault = {
   callback: () => {},
   onStart: () => {},
+  onScratching: () => {},
   size: {
     width: 300,
     height: 150
@@ -225,6 +226,7 @@ export default class ScratchCard {
   }
 
   public refresh = (): void => {
+    this.enableAllMenu(false);
     this.ctx.save();
     this.ctx.globalCompositeOperation = "source-over";
     this.initCard().then(() => {
@@ -270,11 +272,14 @@ export default class ScratchCard {
       if (!self.options.autoRefreshScratchedPercent) {
         self.updateScratchedPercent();
       }
+
+      // emit scratching event
+      self.triggerScratching();
+
       if (self.scratchedPercent > self.options.finishedThreshold) {
         if (!self.alreadyRefreshContextMenu) {
           self.alreadyRefreshContextMenu = true;
-          self.enableAllMenu();
-          self.contextMenu.reCreateMenu(self.menuData);
+          self.enableAllMenu(true);
         }
         if (mouseClickType(e) === 1) {
           self.triggerFinished();
@@ -371,15 +376,23 @@ export default class ScratchCard {
     this.options.callback();
   }
 
+  private triggerScratching = (): void => {
+    if (this.triggeredStartEvent &&
+      this.scratchedPercent < 1) {
+      this.options.onScratching();
+    }
+  }
+
   public setContextMenu = (menu: MenuItem[]): void => {
     this.contextMenu.reCreateMenu(menu);
   }
 
-  private enableAllMenu = (): void => {
+  private enableAllMenu = (enable: boolean = true): void => {
     const len = this.menuData.length;
     for (let i = 0; i < len; i++) {
-      this.menuData[i].disabled = false;
+      this.menuData[i].disabled = !enable;
     }
+    this.contextMenu.reCreateMenu(this.menuData);
   }
 
   /**

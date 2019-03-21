@@ -6,6 +6,16 @@ type EleSize = {
 export interface Options {
   callback?: () => void;
   onStart?: () => void;
+
+  /**
+   * The scratching event is defined as:
+   * During the scratching of the coating process, that is, during the mouse
+   * or gesture sliding process, the scratching event will only be triggered
+   * when the erasing action is completed, that is, when the mouse or gesture
+   * is raised.
+   */
+  onScratching?: () => void;
+
   size?: EleSize;
   sizeAdaption?: boolean;
   finishedThreshold?: number;
