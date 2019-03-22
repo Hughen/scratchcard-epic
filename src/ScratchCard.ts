@@ -245,6 +245,8 @@ export default class ScratchCard {
       })
       .then(() => {
         this.triggeredStartEvent = false;
+        this.alreadyRefreshContextMenu = false;
+        this.scratchedPercent = 0;
       });
   }
 
@@ -381,10 +383,6 @@ export default class ScratchCard {
       this.scratchedPercent < 1) {
       this.options.onScratching();
     }
-  }
-
-  public setContextMenu = (menu: MenuItem[]): void => {
-    this.contextMenu.reCreateMenu(menu);
   }
 
   private enableAllMenu = (enable: boolean = true): void => {
