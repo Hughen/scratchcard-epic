@@ -1,7 +1,7 @@
 import throttle from "lodash.throttle";
 import ResizeObserver from "resize-observer-polyfill";
 import { Options, MenuItem } from "Options";
-import { number2Pixcel, isUrl, isCSSColor, loadImage, getElementPos,
+import { number2Pixel, isUrl, isCSSColor, loadImage, getElementPos,
   isMobileDevice, mouseClickType } from "./util";
 import Brush from "Brush";
 import ContextMenu from "ContextMenu";
@@ -68,7 +68,7 @@ export default class ScratchCard {
     this.options = {
       ...optionsDefault,
       ...options,
-      fontSize: number2Pixcel(options.fontSize) || optionsDefault.fontSize
+      fontSize: number2Pixel(options.fontSize) || optionsDefault.fontSize
     };
     this.container = <HTMLElement>container;
     this.scratchedPercent = 0;

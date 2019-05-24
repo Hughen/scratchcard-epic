@@ -9,7 +9,7 @@ function validURL(str) {
   return !!pattern.test(str);
 }
 
-export function number2Pixcel(num) {
+export function number2Pixel(num) {
   if (typeof num === "number") return `${num}px`;
   const t = num * 1;
   if (!isNaN(t)) return `${num}px`;
